@@ -1,0 +1,108 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_echo.c                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: amokgohl <marvin@42.fr>                    +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2018/09/10 12:11:25 by amokgohl          #+#    #+#             */
+/*   Updated: 2018/09/24 16:26:48 by amokgohl         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "../includes/minishell.h"
+
+static	void	print_special_char(char c)
+{
+	if (c == 'n')
+		write(1, "\n", 1);
+	else if (c == 't')
+		write(1, "\t", 1);
+	else if (c == '\"')
+		write(1, "\"", 1);
+}
+
+static	int		echo_env(char *line, char **env)
+{
+	char	*name;
+	int		i;
+	int		k;
+	int		n;
+
+	i = 1;
+	k = 0;
+	n = 0;
+	name = (char*)malloc(sizeof(char) * (ft_strlen(line)));
+	while (line[i])
+		name[k++] = line[i++];
+	name[k] = '\0';
+	while (env[n])
+	{
+		if (ft_strstr(env[n], name) != 0)
+		{
+			while (env[n][k] != '=')
+				k++;
+			while (env[n][k])
+				write(1, &env[n][k++], 1);
+		}
+		n++;
+	}
+	write(1, "\n", 1);
+	return (1);
+}
+
+static	void	print_echo(char *str)
+{
+	int	i;
+	int	j;
+
+	i = 0;
+	j = (str[i] == '\"') ? 1 : 0;
+	i = i + (str[i] == '\"');
+	while (str[i] != '\0')
+	{
+		if (str[i] == '\\' && str[i + 1] != '\0')
+		{
+			if (str[i + 1] == '\\')
+				i = i + 1;
+			if (j == 1)
+				print_special_char(str[i + 1]);
+			if (j == 1)
+				i = i + 2;
+			else
+				i = 1;
+		}
+		if (str[i] != '\"')
+			write(1, &str[i], 1);
+		i++;
+	}
+}
+
+int				ft_echo(char **argv, t_data *p)
+{
+	int	i;
+	int	n;
+
+	i = 0;
+	n = 0;
+	if (ft_strcmp(argv[i], "echo") == 0)
+		i++;
+	if (argv[i] && ft_strcmp(argv[i], "-n") == 0)
+		n = i++;
+	while (argv[i] && argv[i] != NULL)
+	{
+		if (ft_strchr(argv[i], '$'))
+		{
+			return (echo_env(argv[i++], p->g_env));
+		}
+		print_echo(argv[i]);
+		if (argv[i + 1] != NULL)
+			write(1, " ", 1);
+		i++;
+	}
+	if (n == 0)
+		write(1, "\n", 1);
+	else
+		ft_putstr("\e[48;5;254m\e[38;5;0m%\e[0m\n");
+	return (1);
+}
